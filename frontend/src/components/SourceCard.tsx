@@ -1,8 +1,8 @@
 import React from 'react';
-import type { Source } from '../types';
+import type { SourceDocument } from '../types';
 
 interface SourceCardProps {
-  sources: Source[];
+  sources: SourceDocument[];
 }
 
 const SourceCard: React.FC<SourceCardProps> = ({ sources }) => {
@@ -19,24 +19,13 @@ const SourceCard: React.FC<SourceCardProps> = ({ sources }) => {
           <div key={idx} style={styles.card}>
             <div style={styles.cardHeader}>
               <span style={styles.cardIndex}>#{idx + 1}</span>
-              <span style={styles.score}>
-                相关度: {(source.score * 100).toFixed(1)}%
-              </span>
+              <span style={styles.sourceFile}>📄 {source.source}</span>
             </div>
             <div style={styles.content}>
               {source.content.length > 200
                 ? source.content.slice(0, 200) + '...'
                 : source.content}
             </div>
-            {source.metadata && Object.keys(source.metadata).length > 0 && (
-              <div style={styles.meta}>
-                {Object.entries(source.metadata).map(([key, value]) => (
-                  <span key={key} style={styles.metaItem}>
-                    {key}: {value}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -60,12 +49,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--text-secondary)',
   },
-  icon: {
-    fontSize: '14px',
-  },
-  title: {
-    fontWeight: 600,
-  },
+  icon: { fontSize: '14px' },
+  title: { fontWeight: 600 },
   list: {
     display: 'flex',
     flexDirection: 'column',
@@ -88,7 +73,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     color: 'var(--accent-green)',
   },
-  score: {
+  sourceFile: {
     fontSize: '11px',
     color: 'var(--text-muted)',
   },
@@ -96,19 +81,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: 'var(--text-secondary)',
     lineHeight: 1.5,
-  },
-  meta: {
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '6px',
-    marginTop: '4px',
-  },
-  metaItem: {
-    fontSize: '10px',
-    color: 'var(--text-muted)',
-    background: 'var(--bg-tertiary)',
-    padding: '1px 6px',
-    borderRadius: '3px',
   },
 };
 

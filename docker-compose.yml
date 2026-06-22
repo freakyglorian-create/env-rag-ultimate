@@ -1,30 +1,34 @@
 # ============================================
 # 环境工程 RAG Ultimate - Docker Compose
 # ============================================
-version: "3.8"
 
 services:
   # ===== 后端 FastAPI 服务 =====
   backend:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
     container_name: env-rag-backend
     restart: unless-stopped
     ports:
       - "8000:8000"
     volumes:
-      # 持久化向量存储和上传数据
-      - ./data/vector_store:/app/data/vector_store
-      - ./data/uploads:/app/data/uploads
-      - ./data/evaluation:/app/data/evaluation
+      - vector_store:/app/data/vector_store
+      - uploads:/app/data/uploads
+      - evaluation:/app/data/evaluation
     environment:
       - DEBUG=false
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
-      - DEFAULT_LLM_PROVIDER=ollama
-      - DEFAULT_LLM_MODEL=qwen2.5:7b
+      - DEFAULT_LLM_PROVIDER=deepseek
+      - DEFAULT_LLM_MODEL=deepseek-chat
       - EMBEDDING_MODEL=BAAI/bge-large-zh-v1.5
       - EMBEDDING_DEVICE=cpu
+      - RERANKER_MODEL=BAAI/bge-reranker-base
+      - USE_RERANKER=true
+      - ENABLE_QUERY_REWRITE=true
+      - ENABLE_MULTI_QUERY=false
+      - CHUNK_SIZE=512
+      - CHUNK_OVERLAP=100
+      - HF_ENDPOINT=https://hf-mirror.com
     networks:
       - env-rag-network
     healthcheck:
@@ -32,25 +36,27 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 90s
 
   # ===== 前端 Nginx 静态文件服务 =====
   frontend:
-    image: nginx:alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
     container_name: env-rag-frontend
     restart: unless-stopped
     ports:
       - "80:80"
-    volumes:
-      # 挂载前端构建产物
-      - ./frontend/dist:/usr/share/nginx/html:ro
-      # 挂载 Nginx 配置
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       backend:
         condition: service_healthy
     networks:
       - env-rag-network
+
+volumes:
+  vector_store:
+  uploads:
+  evaluation:
 
 networks:
   env-rag-network:

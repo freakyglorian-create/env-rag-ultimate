@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import type { ChatMessage, QueryOptions as QueryOptionsType } from '../types';
+import type { ChatMessage, QueryOptions as QueryOptionsType, SourceDocument } from '../types';
 import { streamQuery } from '../api/client';
 
 function generateId(): string {
@@ -12,10 +12,10 @@ export function useChat() {
   const abortRef = useRef<AbortController | null>(null);
 
   const sendMessage = useCallback(
-    (query: string, options: QueryOptionsType, provider: string, model: string) => {
+    (query: string, options: QueryOptionsType, provider: string, model: string, apiKey: string) => {
       if (!query.trim() || isStreaming) return;
+      if (!apiKey.trim()) return;
 
-      // Add user message
       const userMsg: ChatMessage = {
         id: generateId(),
         role: 'user',
@@ -23,7 +23,6 @@ export function useChat() {
         timestamp: Date.now(),
       };
 
-      // Add placeholder assistant message
       const assistantMsg: ChatMessage = {
         id: generateId(),
         role: 'assistant',
@@ -38,54 +37,33 @@ export function useChat() {
       setIsStreaming(true);
 
       const assistantId = assistantMsg.id;
+      let sourcesBuffer: SourceDocument[] = [];
 
-      // Start SSE stream
       const controller = streamQuery(
         {
-          query: query.trim(),
+          question: query.trim(),
           provider,
           model,
-          query_rewrite: options.queryRewrite,
-          multi_query: options.multiQuery,
+          api_key: apiKey,
+          use_query_rewrite: options.queryRewrite,
+          use_multi_query: options.multiQuery,
           use_reranker: options.useReranker,
           top_k: options.topK,
         },
-        // onChunk
+        // onToken
         (token) => {
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId
-                ? { ...m, content: m.content + token }
-                : m,
+              m.id === assistantId ? { ...m, content: m.content + token } : m,
             ),
           );
         },
         // onSources
         (sources) => {
+          sourcesBuffer = sources;
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, sources } : m,
-            ),
-          );
-        },
-        // onMetadata
-        (metadata) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === assistantId
-                ? {
-                    ...m,
-                    metadata: {
-                      retrieval_time: metadata.retrieval_time,
-                      generation_time: metadata.generation_time,
-                      total_time: metadata.total_time,
-                      model: metadata.model,
-                      provider: metadata.provider,
-                      query_rewrite: metadata.query_rewrite,
-                      multi_queries: metadata.multi_queries,
-                    },
-                  }
-                : m,
+              m.id === assistantId ? { ...m, sources: sources } : m,
             ),
           );
         },
@@ -93,7 +71,9 @@ export function useChat() {
         () => {
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, isStreaming: false } : m,
+              m.id === assistantId
+                ? { ...m, isStreaming: false, sources: sourcesBuffer.length > 0 ? sourcesBuffer : m.sources }
+                : m,
             ),
           );
           setIsStreaming(false);
@@ -104,7 +84,7 @@ export function useChat() {
           setMessages((prev) =>
             prev.map((m) =>
               m.id === assistantId
-                ? { ...m, content: `Error: ${errorMsg}`, isStreaming: false }
+                ? { ...m, content: m.content || `错误: ${errorMsg}`, isStreaming: false }
                 : m,
             ),
           );

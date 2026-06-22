@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.core.config import settings
+from app.models.schemas import LLMConfig
 from app.services.rag.engine import get_rag_engine
 
 
@@ -72,7 +73,7 @@ class RAGEvaluator:
                 "context_precision": round(prec, 3), "context_recall": round(recall, 3),
                 "overall": round((faith + rel + prec + recall) / 4, 3)}
 
-    def run_evaluation(self, sample_size=None) -> Dict:
+    def run_evaluation(self, sample_size=None, llm_config: LLMConfig = None) -> Dict:
         print("[Eval] 开始评估...")
         engine = get_rag_engine()
         golden = self.load_golden_set()[:sample_size] if sample_size else self.load_golden_set()
@@ -83,7 +84,7 @@ class RAGEvaluator:
         for item in golden:
             print(f"[Eval] {item['question'][:30]}...")
             try:
-                resp = engine.query(item["question"], use_query_rewrite=False)
+                resp = engine.query(item["question"], llm_config=llm_config, use_query_rewrite=False)
                 contexts = [s.content for s in resp.sources]
                 scores = self._score(resp.answer, item["ground_truth"], contexts)
                 results.append({"question": item["question"], "ground_truth": item["ground_truth"],

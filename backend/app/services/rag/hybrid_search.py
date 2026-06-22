@@ -2,12 +2,13 @@
 Hybrid Search 混合检索引擎
 Dense(FAISS) + Sparse(BM25) + RRF融合 + Cross-encoder Reranking
 """
+import os
 import time
 import numpy as np
 from typing import List, Dict, Tuple, Optional
 from collections import defaultdict
 
-from langchain.schema import Document
+from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 from rank_bm25 import BM25Okapi
 import jieba
@@ -50,7 +51,7 @@ class HybridSearchEngine:
         # Dense 索引
         print("[HybridSearch] 构建 Dense 索引 (FAISS)...")
         emb = get_embedding_engine()
-        self.vector_store = FAISS.from_documents(documents, emb._embeddings)
+        self.vector_store = FAISS.from_documents(documents, emb.embeddings)
 
         # Sparse 索引
         print("[HybridSearch] 构建 Sparse 索引 (BM25 + jieba)...")
@@ -70,7 +71,7 @@ class HybridSearchEngine:
 
     def load_index(self, path: str):
         emb = get_embedding_engine()
-        self.vector_store = FAISS.load_local(path, emb._embeddings, allow_dangerous_deserialization=True)
+        self.vector_store = FAISS.load_local(path, emb.embeddings, allow_dangerous_deserialization=True)
         # 加载 BM25
         import pickle
         bm25_path = path + "_bm25.pkl"
@@ -137,7 +138,6 @@ class HybridSearchEngine:
         return results, (time.time() - t0) * 1000
 
 
-import os
 _hybrid: Optional[HybridSearchEngine] = None
 
 def get_hybrid_search() -> HybridSearchEngine:

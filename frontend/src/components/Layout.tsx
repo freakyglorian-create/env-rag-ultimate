@@ -19,8 +19,10 @@ interface LayoutProps {
   // Model
   provider: string;
   model: string;
+  apiKey: string;
   onProviderChange: (p: string) => void;
   onModelChange: (m: string) => void;
+  onApiKeyChange: (k: string) => void;
   // Options
   queryOptions: QueryOptionsType;
 }
@@ -35,8 +37,10 @@ const Layout: React.FC<LayoutProps> = ({
   onClear,
   provider,
   model,
+  apiKey,
   onProviderChange,
   onModelChange,
+  onApiKeyChange,
   queryOptions,
 }) => {
   const renderContent = () => {
@@ -51,8 +55,10 @@ const Layout: React.FC<LayoutProps> = ({
             onClear={onClear}
             provider={provider}
             model={model}
+            apiKey={apiKey}
             onProviderChange={onProviderChange}
             onModelChange={onModelChange}
+            onApiKeyChange={onApiKeyChange}
             queryOptions={queryOptions}
           />
         );

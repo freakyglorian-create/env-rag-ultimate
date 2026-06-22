@@ -1,82 +1,64 @@
-/* ====== 系统状态 ====== */
-export interface SystemStatus {
-  version: string;
-  knowledge_base: KBStatus;
-  embedding_model: string;
-  reranker_status: string;
-  ollama_status: 'running' | 'stopped' | 'unknown';
-  models: ModelInfo[];
-}
-
-export interface KBStatus {
-  loaded: boolean;
-  document_count: number;
-  chunk_count: number;
-  last_built?: string;
-}
+/* ====== 与 backend app/models/schemas.py 对齐 ====== */
 
 export interface ModelInfo {
   provider: string;
   model: string;
-  available: boolean;
-  is_local: boolean;
+  description: string;
 }
 
-/* ====== 查询 ====== */
 export interface QueryRequest {
-  query: string;
-  provider?: string;
-  model?: string;
-  query_rewrite?: boolean;
-  multi_query?: boolean;
-  use_reranker?: boolean;
+  question: string;
   top_k?: number;
+  provider: string;
+  model?: string;
+  api_key: string;
+  use_reranker?: boolean;
+  use_query_rewrite?: boolean;
+  use_multi_query?: boolean;
+}
+
+export interface SourceDocument {
+  content: string;
+  source: string;
+  page?: number;
+  score?: number;
+  chunk_id?: string;
 }
 
 export interface QueryResponse {
   answer: string;
-  sources: Source[];
-  retrieval_time: number;
-  generation_time: number;
-  total_time: number;
-  model: string;
-  provider: string;
+  sources: SourceDocument[];
+  retrieval_time_ms?: number;
+  generation_time_ms?: number;
+  total_time_ms?: number;
+  provider_used: string;
+  model_used: string;
   query_rewrite?: string;
   multi_queries?: string[];
 }
 
-export interface Source {
-  content: string;
-  score: number;
-  metadata: Record<string, string>;
+/* ====== System Status ====== */
+export interface SystemStatus {
+  status: string;
+  version: string;
+  knowledge_base_loaded: boolean;
+  embedding_model: string;
+  reranker_enabled: boolean;
+  query_rewrite_enabled: boolean;
+  multi_query_enabled: boolean;
+  available_models: ModelInfo[];
 }
 
-/* ====== SSE 流式 ====== */
-export interface SSEChunk {
-  type: 'token' | 'sources' | 'metadata' | 'done' | 'error';
-  content?: string;
-  sources?: Source[];
-  metadata?: {
-    retrieval_time?: number;
-    generation_time?: number;
-    model?: string;
-    provider?: string;
-    query_rewrite?: string;
-    multi_queries?: string[];
-  };
-  error?: string;
-}
-
-/* ====== 聊天消息 ====== */
+/* ====== Chat ====== */
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  sources?: Source[];
+  sources?: SourceDocument[];
   metadata?: {
-    retrieval_time?: number;
-    generation_time?: number;
-    total_time?: number;
+    retrieval_time_ms?: number;
+    generation_time_ms?: number;
+    total_time_ms?: number;
     model?: string;
     provider?: string;
     query_rewrite?: string;
@@ -86,65 +68,38 @@ export interface ChatMessage {
   isStreaming?: boolean;
 }
 
-/* ====== 知识库 ====== */
+/* ====== KB ====== */
 export interface KBDocument {
-  filename: string;
-  filepath: string;
+  name: string;
   size: number;
-  uploaded_at: string;
-  chunks?: number;
 }
 
-export interface KBBuildRequest {
-  chunk_size?: number;
-  chunk_overlap?: number;
-}
-
-export interface KBLoadRequest {
-  persist_directory?: string;
-}
-
-/* ====== 评估 ====== */
-export interface EvaluationRequest {
-  questions?: string[];
-  provider?: string;
-  model?: string;
-}
-
-export interface EvaluationResult {
-  question: string;
-  answer: string;
-  scores: {
-    relevance: number;
-    faithfulness: number;
-    completeness: number;
-    clarity: number;
-  };
-  total_score: number;
-  sources?: Source[];
-}
-
-export interface EvaluationReport {
-  results: EvaluationResult[];
-  average_scores: {
-    relevance: number;
-    faithfulness: number;
-    completeness: number;
-    clarity: number;
-    total: number;
-  };
-  timestamp: string;
-  model: string;
+/* ====== Evaluation ====== */
+export interface EvalRequest {
   provider: string;
+  model?: string;
+  api_key: string;
 }
 
-/* ====== 导航 ====== */
+/* ====== Nav ====== */
 export type NavPage = 'chat' | 'knowledge' | 'evaluation' | 'status';
 
-/* ====== 查询选项 ====== */
+/* ====== Query Options ====== */
 export interface QueryOptions {
   queryRewrite: boolean;
   multiQuery: boolean;
   useReranker: boolean;
   topK: number;
+}
+
+/* ====== Key Verification ====== */
+export interface VerifyKeyRequest {
+  provider: string;
+  api_key: string;
+}
+
+export interface VerifyKeyResponse {
+  valid: boolean;
+  models: string[];
+  message: string;
 }

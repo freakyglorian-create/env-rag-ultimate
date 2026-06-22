@@ -1,5 +1,6 @@
 """
 环境工程 RAG Ultimate 系统配置
+API Key 由前端用户传入，不再存储在服务端 .env 中
 """
 import os
 from pathlib import Path
@@ -7,14 +8,19 @@ from typing import List, Optional
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# ===== HuggingFace 离线模式（必须在 load_dotenv 之前设置）=====
+# 优先使用 HF Mirror，避免超时
+os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+os.environ.setdefault("HF_HUB_OFFLINE", "0")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "0")
+
+load_dotenv(BASE_DIR / ".env")
 DATA_DIR = BASE_DIR.parent / "data"
 KNOWLEDGE_DIR = DATA_DIR / "knowledge_base"
 UPLOAD_DIR = DATA_DIR / "uploads"
 VECTOR_STORE_DIR = DATA_DIR / "vector_store"
-VECTOR_STORE_PATH = VECTOR_STORE_DIR
 EVALUATION_DIR = DATA_DIR / "evaluation"
 
 for d in [KNOWLEDGE_DIR, UPLOAD_DIR, VECTOR_STORE_DIR, EVALUATION_DIR]:
@@ -26,21 +32,9 @@ class Settings(BaseSettings):
     APP_VERSION: str = "3.0.0"
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
 
-    # ===== LLM Providers =====
-    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
-    OPENAI_BASE_URL: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-    DEEPSEEK_API_KEY: Optional[str] = os.getenv("DEEPSEEK_API_KEY")
-    DEEPSEEK_BASE_URL: str = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-    SILICONFLOW_API_KEY: Optional[str] = os.getenv("SILICONFLOW_API_KEY")
-    SILICONFLOW_BASE_URL: str = os.getenv("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1")
-
-    # ===== Ollama (本地模型) =====
-    OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-    OLLAMA_DEFAULT_MODEL: str = os.getenv("OLLAMA_DEFAULT_MODEL", "qwen2.5:7b")
-
-    # ===== Default Model =====
-    DEFAULT_LLM_PROVIDER: str = os.getenv("DEFAULT_LLM_PROVIDER", "ollama")
-    DEFAULT_LLM_MODEL: str = os.getenv("DEFAULT_LLM_MODEL", "qwen2.5:7b")
+    # ===== Default LLM（仅作为回退默认值）=====
+    DEFAULT_LLM_PROVIDER: str = os.getenv("DEFAULT_LLM_PROVIDER", "deepseek")
+    DEFAULT_LLM_MODEL: str = os.getenv("DEFAULT_LLM_MODEL", "deepseek-chat")
 
     # ===== Embedding =====
     EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "BAAI/bge-large-zh-v1.5")
@@ -64,12 +58,14 @@ class Settings(BaseSettings):
 
     # ===== Evaluation =====
     EVALUATION_DATASET_PATH: str = str(EVALUATION_DIR / "golden_set.json")
+    VECTOR_STORE_PATH: Path = VECTOR_STORE_DIR
 
     # ===== CORS =====
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"]
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
 
 settings = Settings()

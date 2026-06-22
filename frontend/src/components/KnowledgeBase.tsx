@@ -66,7 +66,7 @@ const KnowledgeBase: React.FC = () => {
     setLoadingKB(true);
     try {
       const result = await loadKnowledgeBase();
-      showMessage('success', result.message);
+      showMessage('success', result.success ? '知识库加载成功' : '知识库加载失败');
     } catch (err) {
       showMessage('error', `加载失败: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -104,7 +104,6 @@ const KnowledgeBase: React.FC = () => {
         <span style={styles.subtitle}>管理文档和知识库构建</span>
       </div>
 
-      {/* Message */}
       {message && (
         <div
           style={{
@@ -116,7 +115,6 @@ const KnowledgeBase: React.FC = () => {
         </div>
       )}
 
-      {/* Upload area */}
       <div
         style={{
           ...styles.uploadArea,
@@ -145,7 +143,6 @@ const KnowledgeBase: React.FC = () => {
         </div>
       </div>
 
-      {/* Action buttons */}
       <div style={styles.actions}>
         <button
           onClick={handleBuild}
@@ -174,10 +171,9 @@ const KnowledgeBase: React.FC = () => {
         </button>
       </div>
 
-      {/* Documents table */}
       <div style={styles.tableContainer}>
         <h3 style={styles.tableTitle}>
-          已加载文档 ({documents.length})
+          知识库文档 ({documents.length})
         </h3>
         {loading ? (
           <div style={styles.loading}>加载中...</div>
@@ -189,8 +185,6 @@ const KnowledgeBase: React.FC = () => {
               <tr>
                 <th style={styles.th}>文件名</th>
                 <th style={styles.th}>大小</th>
-                <th style={styles.th}>分块数</th>
-                <th style={styles.th}>上传时间</th>
               </tr>
             </thead>
             <tbody>
@@ -198,13 +192,9 @@ const KnowledgeBase: React.FC = () => {
                 <tr key={idx} style={idx % 2 === 0 ? {} : { background: 'rgba(255,255,255,0.02)' }}>
                   <td style={styles.td}>
                     <span style={styles.fileIcon}>📄</span>
-                    {doc.filename}
+                    {doc.name}
                   </td>
                   <td style={styles.td}>{formatFileSize(doc.size)}</td>
-                  <td style={styles.td}>{doc.chunks ?? '-'}</td>
-                  <td style={styles.td}>
-                    {new Date(doc.uploaded_at).toLocaleString('zh-CN')}
-                  </td>
                 </tr>
               ))}
             </tbody>
@@ -216,117 +206,50 @@ const KnowledgeBase: React.FC = () => {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  container: {
-    padding: '24px',
-    overflowY: 'auto',
-    height: '100%',
-  },
-  header: {
-    marginBottom: '24px',
-  },
-  title: {
-    fontSize: '22px',
-    fontWeight: 700,
-    color: 'var(--text-primary)',
-    marginBottom: '4px',
-  },
-  subtitle: {
-    fontSize: '14px',
-    color: 'var(--text-muted)',
-  },
+  container: { padding: '24px', overflowY: 'auto', height: '100%' },
+  header: { marginBottom: '24px' },
+  title: { fontSize: '22px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' },
+  subtitle: { fontSize: '14px', color: 'var(--text-muted)' },
   message: {
-    padding: '10px 14px',
-    background: 'var(--bg-secondary)',
-    borderRadius: 'var(--radius-sm)',
-    fontSize: '13px',
-    color: 'var(--text-primary)',
-    marginBottom: '16px',
+    padding: '10px 14px', background: 'var(--bg-secondary)',
+    borderRadius: 'var(--radius-sm)', fontSize: '13px',
+    color: 'var(--text-primary)', marginBottom: '16px',
   },
   uploadArea: {
-    border: '2px dashed var(--border-color)',
-    borderRadius: 'var(--radius-md)',
-    padding: '32px',
-    textAlign: 'center',
-    cursor: 'pointer',
-    marginBottom: '16px',
-    transition: 'var(--transition)',
+    border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-md)',
+    padding: '32px', textAlign: 'center', cursor: 'pointer',
+    marginBottom: '16px', transition: 'var(--transition)',
   },
-  uploadIcon: {
-    fontSize: '36px',
-    marginBottom: '8px',
-  },
-  uploadText: {
-    fontSize: '14px',
-    color: 'var(--text-secondary)',
-    marginBottom: '4px',
-  },
-  uploadHint: {
-    fontSize: '12px',
-    color: 'var(--text-muted)',
-  },
-  actions: {
-    display: 'flex',
-    gap: '10px',
-    marginBottom: '24px',
-    flexWrap: 'wrap',
-  },
+  uploadIcon: { fontSize: '36px', marginBottom: '8px' },
+  uploadText: { fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '4px' },
+  uploadHint: { fontSize: '12px', color: 'var(--text-muted)' },
+  actions: { display: 'flex', gap: '10px', marginBottom: '24px', flexWrap: 'wrap' },
   actionBtn: {
-    padding: '8px 20px',
-    borderRadius: 'var(--radius-sm)',
-    border: 'none',
-    color: 'white',
-    fontSize: '13px',
-    fontWeight: 600,
-    cursor: 'pointer',
+    padding: '8px 20px', borderRadius: 'var(--radius-sm)', border: 'none',
+    color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
     transition: 'var(--transition)',
   },
   tableContainer: {
-    background: 'var(--bg-secondary)',
-    borderRadius: 'var(--radius-md)',
-    border: '1px solid var(--border-color)',
-    overflow: 'hidden',
+    background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--border-color)', overflow: 'hidden',
   },
   tableTitle: {
-    padding: '14px 16px',
-    fontSize: '15px',
-    fontWeight: 600,
-    color: 'var(--text-primary)',
-    borderBottom: '1px solid var(--border-color)',
+    padding: '14px 16px', fontSize: '15px', fontWeight: 600,
+    color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)',
   },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
+  table: { width: '100%', borderCollapse: 'collapse' as const },
   th: {
-    padding: '10px 16px',
-    textAlign: 'left',
-    fontSize: '12px',
-    fontWeight: 600,
-    color: 'var(--text-muted)',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    borderBottom: '1px solid var(--border-color)',
+    padding: '10px 16px', textAlign: 'left' as const, fontSize: '12px',
+    fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase' as const,
+    letterSpacing: '0.5px', borderBottom: '1px solid var(--border-color)',
   },
   td: {
-    padding: '10px 16px',
-    fontSize: '13px',
-    color: 'var(--text-secondary)',
+    padding: '10px 16px', fontSize: '13px', color: 'var(--text-secondary)',
     borderBottom: '1px solid var(--border-color)',
   },
-  fileIcon: {
-    marginRight: '6px',
-  },
-  loading: {
-    padding: '24px',
-    textAlign: 'center',
-    color: 'var(--text-muted)',
-  },
-  empty: {
-    padding: '32px',
-    textAlign: 'center',
-    color: 'var(--text-muted)',
-    fontSize: '14px',
-  },
+  fileIcon: { marginRight: '6px' },
+  loading: { padding: '24px', textAlign: 'center', color: 'var(--text-muted)' },
+  empty: { padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' },
 };
 
 export default KnowledgeBase;

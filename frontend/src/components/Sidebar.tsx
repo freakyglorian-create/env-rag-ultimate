@@ -16,15 +16,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   currentModel,
   currentProvider,
 }) => {
-  const [ollamaStatus, setOllamaStatus] = useState<string>('unknown');
+  const [kbLoaded, setKbLoaded] = useState(false);
 
   useEffect(() => {
     const fetchStatus = async () => {
       try {
         const status = await getSystemStatus();
-        setOllamaStatus(status.ollama_status);
+        setKbLoaded(status.knowledge_base_loaded);
       } catch {
-        setOllamaStatus('stopped');
+        setKbLoaded(false);
       }
     };
     fetchStatus();
@@ -34,7 +34,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div style={styles.container}>
-      {/* Logo */}
       <div style={styles.logoArea}>
         <div style={styles.logoIcon}>🌍</div>
         <div style={styles.logoText}>
@@ -43,7 +42,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Navigation */}
       <nav style={styles.nav}>
         {NAV_ITEMS.map((item) => (
           <button
@@ -60,7 +58,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </nav>
 
-      {/* Bottom status */}
       <div style={styles.bottomArea}>
         <div style={styles.divider} />
         <div style={styles.statusSection}>
@@ -71,24 +68,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             </span>
           </div>
           <div style={styles.statusRow}>
-            <span style={styles.statusLabel}>Ollama</span>
+            <span style={styles.statusLabel}>知识库</span>
             <span style={styles.statusValue}>
               <span
                 style={{
                   ...styles.statusDot,
-                  background:
-                    ollamaStatus === 'running'
-                      ? 'var(--accent-green)'
-                      : ollamaStatus === 'stopped'
-                        ? 'var(--accent-red)'
-                        : 'var(--accent-yellow)',
+                  background: kbLoaded ? 'var(--accent-green)' : 'var(--accent-red)',
                 }}
               />
-              {ollamaStatus === 'running'
-                ? '运行中'
-                : ollamaStatus === 'stopped'
-                  ? '已停止'
-                  : '未知'}
+              {kbLoaded ? '已加载' : '未加载'}
             </span>
           </div>
         </div>
@@ -113,24 +101,10 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '10px',
     padding: '20px 16px 16px',
   },
-  logoIcon: {
-    fontSize: '28px',
-    flexShrink: 0,
-  },
-  logoText: {
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  logoTitle: {
-    fontSize: '15px',
-    fontWeight: 700,
-    color: 'var(--text-primary)',
-    lineHeight: 1.3,
-  },
-  logoSub: {
-    fontSize: '11px',
-    color: 'var(--text-muted)',
-  },
+  logoIcon: { fontSize: '28px', flexShrink: 0 },
+  logoText: { display: 'flex', flexDirection: 'column' },
+  logoTitle: { fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 },
+  logoSub: { fontSize: '11px', color: 'var(--text-muted)' },
   nav: {
     flex: 1,
     padding: '8px 10px',
@@ -157,14 +131,8 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'var(--accent-blue)',
     color: 'white',
   },
-  navIcon: {
-    fontSize: '16px',
-    width: '20px',
-    textAlign: 'center',
-  },
-  bottomArea: {
-    padding: '0 16px 16px',
-  },
+  navIcon: { fontSize: '16px', width: '20px', textAlign: 'center' },
+  bottomArea: { padding: '0 16px 16px' },
   divider: {
     height: '1px',
     background: 'var(--border-color)',
@@ -181,9 +149,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     fontSize: '12px',
   },
-  statusLabel: {
-    color: 'var(--text-muted)',
-  },
+  statusLabel: { color: 'var(--text-muted)' },
   statusValue: {
     color: 'var(--text-secondary)',
     display: 'flex',

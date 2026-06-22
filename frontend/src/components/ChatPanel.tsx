@@ -12,8 +12,10 @@ interface ChatPanelProps {
   onClear: () => void;
   provider: string;
   model: string;
+  apiKey: string;
   onProviderChange: (p: string) => void;
   onModelChange: (m: string) => void;
+  onApiKeyChange: (k: string) => void;
   queryOptions: QueryOptionsType;
 }
 
@@ -25,8 +27,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onClear,
   provider,
   model,
+  apiKey,
   onProviderChange,
   onModelChange,
+  onApiKeyChange,
   queryOptions,
 }) => {
   const [input, setInput] = useState('');
@@ -69,8 +73,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           <ModelSelector
             provider={provider}
             model={model}
+            apiKey={apiKey}
             onProviderChange={onProviderChange}
             onModelChange={onModelChange}
+            onApiKeyChange={onApiKeyChange}
           />
         </div>
         <div style={styles.topBarRight}>

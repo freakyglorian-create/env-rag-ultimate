@@ -2,11 +2,12 @@ export const API_BASE_URL = 'http://localhost:8000/api/v1';
 
 export const APP_NAME = '环境工程 RAG Ultimate';
 
+// 与 backend app/models/schemas.py LLMProvider 一致
 export const PROVIDERS = [
-  { value: 'ollama', label: 'Ollama' },
-  { value: 'openai', label: 'OpenAI' },
   { value: 'deepseek', label: 'DeepSeek' },
-  { value: 'siliconflow', label: 'SiliconFlow' },
+  { value: 'qwen', label: '通义千问 (Qwen)' },
+  { value: 'glm', label: '智谱 GLM' },
+  { value: 'kimi', label: 'Kimi (月之暗面)' },
 ] as const;
 
 export const DEFAULT_QUERY_OPTIONS = {

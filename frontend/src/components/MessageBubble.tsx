@@ -27,7 +27,6 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           minWidth: isUser ? '80px' : '200px',
         }}
       >
-        {/* Message bubble */}
         <div
           style={{
             padding: '12px 16px',
@@ -59,7 +58,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           )}
         </div>
 
-        {/* Metadata bar for assistant messages */}
+        {/* Metadata bar */}
         {!isUser && message.metadata && !message.isStreaming && (
           <div style={metadataBarStyle}>
             {message.metadata.model && (
@@ -67,19 +66,19 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 🤖 {message.metadata.provider}/{message.metadata.model}
               </span>
             )}
-            {message.metadata.retrieval_time != null && (
+            {message.metadata.retrieval_time_ms != null && (
               <span style={metaTagStyle}>
-                🔍 检索 {(message.metadata.retrieval_time / 1000).toFixed(2)}s
+                🔍 检索 {(message.metadata.retrieval_time_ms / 1000).toFixed(2)}s
               </span>
             )}
-            {message.metadata.generation_time != null && (
+            {message.metadata.generation_time_ms != null && (
               <span style={metaTagStyle}>
-                ⚡ 生成 {(message.metadata.generation_time / 1000).toFixed(2)}s
+                ⚡ 生成 {(message.metadata.generation_time_ms / 1000).toFixed(2)}s
               </span>
             )}
-            {message.metadata.total_time != null && (
+            {message.metadata.total_time_ms != null && (
               <span style={metaTagStyle}>
-                ⏱ 总计 {(message.metadata.total_time / 1000).toFixed(2)}s
+                ⏱ 总计 {(message.metadata.total_time_ms / 1000).toFixed(2)}s
               </span>
             )}
           </div>

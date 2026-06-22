@@ -24,7 +24,7 @@ PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # ----- 激活虚拟环境 -----
-VENV_DIR="$PROJECT_ROOT/venv"
+VENV_DIR="$PROJECT_ROOT/backend/venv"
 if [ -d "$VENV_DIR/bin" ]; then
     source "$VENV_DIR/bin/activate"
     info "虚拟环境已激活"

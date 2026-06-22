@@ -8,8 +8,10 @@ import Layout from './components/Layout';
 interface AppContextType {
   provider: string;
   model: string;
+  apiKey: string;
   onProviderChange: (p: string) => void;
   onModelChange: (m: string) => void;
+  onApiKeyChange: (k: string) => void;
   queryOptions: QueryOptionsType;
   toggleRewrite: () => void;
   toggleMultiQuery: () => void;
@@ -23,8 +25,9 @@ export const useAppContext = () => useContext(AppContext);
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<NavPage>('chat');
-  const [provider, setProvider] = useState('ollama');
-  const [model, setModel] = useState('qwen2.5:7b');
+  const [provider, setProvider] = useState('deepseek');
+  const [model, setModel] = useState('deepseek-chat');
+  const [apiKey, setApiKey] = useState('');
 
   const {
     options: queryOptions,
@@ -37,22 +40,25 @@ const App: React.FC = () => {
   const { messages, isStreaming, sendMessage, stopStreaming, clearMessages } = useChat();
 
   const handleSend = (query: string) => {
-    sendMessage(query, queryOptions, provider, model);
+    if (!apiKey.trim()) return;
+    sendMessage(query, queryOptions, provider, model, apiKey);
   };
 
   const contextValue = useMemo(
     () => ({
       provider,
       model,
+      apiKey,
       onProviderChange: setProvider,
       onModelChange: setModel,
+      onApiKeyChange: setApiKey,
       queryOptions,
       toggleRewrite,
       toggleMultiQuery,
       toggleReranker,
       setTopK,
     }),
-    [provider, model, queryOptions, toggleRewrite, toggleMultiQuery, toggleReranker, setTopK],
+    [provider, model, apiKey, queryOptions, toggleRewrite, toggleMultiQuery, toggleReranker, setTopK],
   );
 
   return (
@@ -67,8 +73,10 @@ const App: React.FC = () => {
         onClear={clearMessages}
         provider={provider}
         model={model}
+        apiKey={apiKey}
         onProviderChange={setProvider}
         onModelChange={setModel}
+        onApiKeyChange={setApiKey}
         queryOptions={queryOptions}
       />
     </AppContext.Provider>

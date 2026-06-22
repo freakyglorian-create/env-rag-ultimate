@@ -5,10 +5,9 @@ import type {
   QueryResponse,
   ModelInfo,
   KBDocument,
-  KBBuildRequest,
-  KBLoadRequest,
-  EvaluationRequest,
-  EvaluationReport,
+  VerifyKeyRequest,
+  VerifyKeyResponse,
+  SourceDocument,
 } from '../types';
 import { API_BASE_URL } from '../utils/constants';
 
@@ -20,24 +19,23 @@ const api = axios.create({
   },
 });
 
-/* ====== 系统状态 ====== */
+/* ====== System ====== */
 export async function getSystemStatus(): Promise<SystemStatus> {
   const { data } = await api.get<SystemStatus>('/status');
   return data;
 }
 
-/* ====== 查询 ====== */
+/* ====== Query ====== */
 export async function postQuery(req: QueryRequest): Promise<QueryResponse> {
   const { data } = await api.post<QueryResponse>('/query', req);
   return data;
 }
 
-/* ====== SSE 流式查询 ====== */
+/* ====== SSE Stream ====== */
 export function streamQuery(
   req: QueryRequest,
-  onChunk: (chunk: string) => void,
-  onSources: (sources: QueryResponse['sources']) => void,
-  onMetadata: (metadata: QueryResponse) => void,
+  onToken: (token: string) => void,
+  onSources: (sources: SourceDocument[]) => void,
   onDone: () => void,
   onError: (error: string) => void,
 ): AbortController {
@@ -51,7 +49,7 @@ export function streamQuery(
   })
     .then(async (response) => {
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`HTTP ${response.status}`);
       }
       const reader = response.body?.getReader();
       if (!reader) throw new Error('No response body');
@@ -70,27 +68,26 @@ export function streamQuery(
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const jsonStr = line.slice(6).trim();
-            if (jsonStr === '[DONE]') {
-              onDone();
-              return;
-            }
+            if (!jsonStr) continue;
             try {
               const parsed = JSON.parse(jsonStr);
-              if (parsed.type === 'token' && parsed.content) {
-                onChunk(parsed.content);
-              } else if (parsed.type === 'sources' && parsed.sources) {
-                onSources(parsed.sources);
-              } else if (parsed.type === 'metadata' && parsed.metadata) {
-                onMetadata(parsed.metadata);
-              } else if (parsed.type === 'error') {
-                onError(parsed.error || 'Unknown error');
+              // Backend sends: {token: "..."} or {sources: [...], done: true} or {error: "..."}
+              if (parsed.error) {
+                onError(parsed.error);
                 return;
-              } else if (parsed.type === 'done') {
+              }
+              if (parsed.token) {
+                onToken(parsed.token);
+              }
+              if (parsed.sources) {
+                onSources(parsed.sources);
+              }
+              if (parsed.done) {
                 onDone();
                 return;
               }
             } catch {
-              // ignore non-JSON lines
+              // ignore malformed JSON
             }
           }
         }
@@ -106,20 +103,25 @@ export function streamQuery(
   return controller;
 }
 
-/* ====== 模型 ====== */
+/* ====== Models ====== */
 export async function getModels(): Promise<ModelInfo[]> {
   const { data } = await api.get<ModelInfo[]>('/models');
   return data;
 }
 
-/* ====== 知识库 ====== */
-export async function buildKnowledgeBase(req?: KBBuildRequest): Promise<{ message: string }> {
-  const { data } = await api.post<{ message: string }>('/kb/build', req || {});
+export async function verifyApiKey(req: VerifyKeyRequest): Promise<VerifyKeyResponse> {
+  const { data } = await api.post<VerifyKeyResponse>('/models/verify', req);
   return data;
 }
 
-export async function loadKnowledgeBase(req?: KBLoadRequest): Promise<{ message: string }> {
-  const { data } = await api.post<{ message: string }>('/kb/load', req || {});
+/* ====== KB ====== */
+export async function buildKnowledgeBase(): Promise<{ success: boolean; message: string; chunks_count: number }> {
+  const { data } = await api.post('/kb/build');
+  return data;
+}
+
+export async function loadKnowledgeBase(): Promise<{ success: boolean }> {
+  const { data } = await api.post('/kb/load');
   return data;
 }
 
@@ -128,24 +130,24 @@ export async function getDocuments(): Promise<KBDocument[]> {
   return data;
 }
 
-export async function uploadDocument(file: File): Promise<{ message: string; filename: string }> {
+export async function uploadDocument(file: File): Promise<{ success: boolean; filename: string }> {
   const formData = new FormData();
   formData.append('file', file);
-  const { data } = await api.post<{ message: string; filename: string }>('/upload', formData, {
+  const { data } = await api.post('/upload', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 120000,
   });
   return data;
 }
 
-/* ====== 评估 ====== */
-export async function runEvaluation(req?: EvaluationRequest): Promise<{ message: string }> {
-  const { data } = await api.post<{ message: string }>('/evaluation/run', req || {});
+/* ====== Evaluation ====== */
+export async function runEvaluation(req: { provider: string; model?: string; api_key: string }) {
+  const { data } = await api.post('/evaluation/run', req, { timeout: 300000 });
   return data;
 }
 
-export async function getEvaluationReport(): Promise<EvaluationReport> {
-  const { data } = await api.get<EvaluationReport>('/evaluation/report');
+export async function getEvaluationReport() {
+  const { data } = await api.get('/evaluation/report');
   return data;
 }
 
